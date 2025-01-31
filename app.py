@@ -60,8 +60,8 @@ def receive_alert(alert: Message):
 def get_alerts():
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM alerts")
-    data = cursor.fetchall()
+    cursor.execute("SELECT rowid, message, severity, status FROM alerts ORDER BY rowid DESC")
+    data = [{"id": row[0], "message": row[1], "severity": row[2], "status": row[3]} for row in cursor.fetchall()]
     conn.close()
 
     return {"alerts": data}
