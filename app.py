@@ -15,8 +15,6 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row  # Allows accessing columns by name
     return conn
 
-conn = get_db_connection()
-cursor = conn.cursor()
 app = FastAPI()
 
 app.add_middleware(
@@ -38,10 +36,13 @@ def receive_alert(alert: Message):
     print(severity)
     status = "Acknowledged" if severity == "Info" else "Escalated"
 
+    conn = get_db_connection()
+    cursor = conn.cursor()
     # Store in DB
     cursor.execute("INSERT INTO alerts (message, severity, status) VALUES (?, ?, ?)", 
                    (alert.message, severity, status))
     conn.commit()
+    conn.close()
 
     action = {
         "Critical": "Restarting affected service...",
@@ -61,10 +62,13 @@ def receive_alert(message: str = Query(..., description="Alert message to proces
     severity = model.predict([message])[0]  # AI predicts severity
     status = "Acknowledged" if severity == "Info" else "Escalated"
 
+    conn = get_db_connection()
+    cursor = conn.cursor()
     # Store in DB
     cursor.execute("INSERT INTO alerts (message, severity, status) VALUES (?, ?, ?)", 
                    (message, severity, status))
     conn.commit()
+    conn.close()
 
     action = {
         "Critical": "Restarting affected service...",
@@ -81,6 +85,10 @@ def receive_alert(message: str = Query(..., description="Alert message to proces
 
 @app.get("/alerts/")
 def get_alerts():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM alerts")
     data = cursor.fetchall()
+    conn.close()
+
     return {"alerts": data}
