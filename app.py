@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import pickle
 import sqlite3
-from .models import Message
+from models import Message
 app = FastAPI()
 
 # Connect to the SQLite database
