@@ -31,9 +31,7 @@ with open("alert_classifier.pkl", "rb") as model_file:
 
 @app.post("/receive_alert/")
 def receive_alert(alert: Message):
-    print(alert.message)
     severity = model.predict([alert.message])[0]  # AI predicts severity
-    print(severity)
     status = "Acknowledged" if severity == "Info" else "Escalated"
 
     conn = get_db_connection()
@@ -57,31 +55,6 @@ def receive_alert(alert: Message):
         "action_taken": action
     }
 
-@app.get("/receive_alert/")
-def receive_alert(message: str = Query(..., description="Alert message to process")):
-    severity = model.predict([message])[0]  # AI predicts severity
-    status = "Acknowledged" if severity == "Info" else "Escalated"
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    # Store in DB
-    cursor.execute("INSERT INTO alerts (message, severity, status) VALUES (?, ?, ?)", 
-                   (message, severity, status))
-    conn.commit()
-    conn.close()
-
-    action = {
-        "Critical": "Restarting affected service...",
-        "Warning": "Notifying on-call engineer...",
-        "Info": "Logging alert, no action required."
-    }.get(severity, "No action taken.")
-
-    return {
-        "alert_received": message,
-        "severity": severity,
-        "status": status,
-        "action_taken": action
-    }
 
 @app.get("/alerts/")
 def get_alerts():
