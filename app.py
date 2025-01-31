@@ -10,11 +10,14 @@ origins = [
 ]
 
 # Connect to the SQLite database
-conn = sqlite3.connect("alerts.db")
+def get_db_connection():
+    conn = sqlite3.connect("alerts.db")
+    conn.row_factory = sqlite3.Row  # Allows accessing columns by name
+    return conn
+
+conn = get_db_connection()
 cursor = conn.cursor()
-
 app = FastAPI()
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,7 +33,9 @@ with open("alert_classifier.pkl", "rb") as model_file:
 
 @app.post("/receive_alert/")
 def receive_alert(alert: Message):
+    print(alert.message)
     severity = model.predict([alert.message])[0]  # AI predicts severity
+    print(severity)
     status = "Acknowledged" if severity == "Info" else "Escalated"
 
     # Store in DB
