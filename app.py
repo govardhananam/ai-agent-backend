@@ -2,13 +2,27 @@ from fastapi import FastAPI
 import pickle
 import sqlite3
 from models import Message
-app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "http://localhost:3000",
+    "https://ai-alert-frontend.vercel.app"
+]
 
 # Connect to the SQLite database
 conn = sqlite3.connect("alerts.db")
 cursor = conn.cursor()
 
 app = FastAPI()
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, OPTIONS, etc.)
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Load the trained AI model
 with open("alert_classifier.pkl", "rb") as model_file:
